@@ -1,7 +1,7 @@
 # Predicting the Roles in League of Legends
 By Jeremy Quinto
 
-Exploratory Data Analysis for this dataset can be found (here).[https://jpquinto.github.io/League-Of-Legends-Skill-Diffs-Analysis/]
+Exploratory Data Analysis for this dataset can be found [here](https://jpquinto.github.io/League-Of-Legends-Skill-Diffs-Analysis/)
 
 ### Overview
 
@@ -43,4 +43,15 @@ We then used `GridSearchSV` to iteratively find the best combination of hyperpar
 
 Below is a confusion matrix of our model on the entire player dataset. Of all the players, our model only predicted 6 of the 181 *incorrectly*. That's pretty good, and an improvement from our baseline model.
 
-!(Confusion Matrix)[cm1.png]
+![Confusion Matrix](cm1.png)
+
+### Fairness Analysis
+Next, we performed fairness analysis on our model to see if it performs worse for players that arne't the LCS and LCK. We created a dataframe called `sl`, which has played from the `SuperLiga` 2022 season. This is about the same amount of players as the LCS and LCK combined, so our groups are equal.
+
+Here, we ask the question: does our model perform worse on Group X than it does on Group Y? In this case, Group X is the SuperLiga, and Group Y is the LCS/LCK. 
+
+We performeda **permutation test** with a significance level of $p=0.05$ to see if our model is fair. We used f1-score as our evaluation metric, and compare the leagues SL vs LCS/LCK. 
+
+**Null Hypothesis**: Our model is fair, its F1-score for the SuperLiga and the LCS/LCK are roughly the same, and any differences are due to random chance.
+
+**Alternative Hypothesis**: Our model is unfair. Its F1-score for SuperLiga is lower than its precision for the LCS/LCK. 
