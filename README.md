@@ -72,3 +72,6 @@ However, as our model was built with the LCS/LCK in mind, and the leagues may di
 We were able to create an effective model for predicting the role of a player given their damage mitigated per minute, their cs per minute, their earned gold share, and their monster kills. We started with a baseline model which involved linear regression on two features, and then upgraded that model to use 4 features, and include decision trees and GridSearch to fine tune the parameters. Unfortunately, as we wanted to focus on just the LCS/LCK, our permutation test suggested that our model was not fair when it came to predicting other leagues. Next time, one could train the final model on the entire league instead of just the LCS/LCK in order to get a more fair model across the leagues.
 
 Thank you for reading!
+
+
+Note: I did not have a partner for this project, I just used 'we' a lot.
