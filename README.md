@@ -17,6 +17,10 @@ Just like our exploratory data analysis project, we will be looking at data from
 ### Baseline Model
 
 We started by creating a baseline model using just 2 features. First, we created boxplots of the distributions of different candidate features, separated by role. For this model, we ended up using the features: `cspm` and `damagetakenperminute`, since their distributions between the groups looked the most different. 
+
+
+![Boxplots](boxplots.png)
+
 We performed a one hot encoding on the `position` column, making it an ordinal variable. `cspm` is a quantitative continuous feature, and `damagetakenperminute` is also a quantitative continuous feature. We did not adjust anything with those two columns. 
 
 Our model ended up performing well, with the macro averages for precision, recall, and f1-score coming out to about 80%, while the weighted averages were a couple points higher, all for the testing data. This means it was about 80% accurate in predicting the roles of the players in the testing data, and I thought that was a good place to start for our baseline model.
