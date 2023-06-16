@@ -20,6 +20,8 @@ We started by creating a baseline model using just 2 features. First, we created
 We performed a one hot encoding on the `position` column, making it an ordinal variable. `cspm` is a quantitative continuous feature, and `damagetakenperminute` is also a quantitative continuous feature. We did not adjust anything with those two columns. 
 
 Our model ended up performing well, with the macro averages for precision, recall, and f1-score coming out to about 80%, while the weighted averages were a couple points higher, all for the testing data. This means it was about 80% accurate in predicting the roles of the players in the testing data, and I thought that was a good place to start for our baseline model.
+
+
 ![Testing Data Baseline Model](testingbaseline.png)
 
 ### Final Model
@@ -41,9 +43,13 @@ We then used `GridSearchSV` to iteratively find the best combination of hyperpar
 - `model n estimators` = 100
 
 `GridSearchSV` gave us our best model, and we used it to predict the testing data. Remember that our baseline model had a weighted average of 83% on precision, 81% on recall, and 81% for f1-score on the testing data. Our final model boasted a weighted average of 91% on precision, 89% on recall, and 89% on f1-score on the same testing data. This means our final model performed around 10% better than our baseline model when it came to predicting the roles of players in the LCS/LCK. While not perfect, it was a major improvement over the baseline model, and it was able to perfectly predict every jungle, support, and top player in the testing data, with just a few misses in the bot and mid roles. 
+
+
 ![Testing Data Final Model](testingfinal.png)
 
 Below is a confusion matrix of our model on the entire player dataset. Of all the players, our model only predicted 6 of the 181 *incorrectly*. That's pretty good, and an improvement from our baseline model.
+
+
 
 ![Confusion Matrix](cm1.png)
 
