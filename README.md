@@ -33,6 +33,35 @@ We started by creating a baseline model using just 2 features. First, we created
 
 We performed a one hot encoding on the `position` column, making it an ordinal variable. `cspm` is a quantitative continuous feature, and `damagetakenperminute` is also a quantitative continuous feature. We did not adjust anything with those two columns. 
 
+What this code does is create a function that takes in 2 columns. In this case, we used `cspm` and `damagetakenperminute`. It then performs logistic regression on them predict the roles of players, splitting the data into test and training, then training the model based on the training data, and testing it on the testing data. 
+```
+def baseline_model(column1, column2):
+    # Prepare the data
+    data = players[[column1, column2, 'posnum']].copy()
+
+    data.loc[:, 'posnum'] = pd.cut(data['posnum'], bins=[0, 1, 2, 3, 4, 5], labels=['top', 'jng', 'mid', 'bot', 'support'])
+
+    # Split the data into training and testing sets
+    X = data[[column1, column2]]
+    y = data['posnum']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Train the baseline model
+    model = LogisticRegression(max_iter=1000)
+    model.fit(X_train, y_train)
+
+    # Evaluate the model on training data
+    y_train_pred = model.predict(X_train)
+    print("Training Performance:")
+    print(classification_report(y_train, y_train_pred))
+
+    # Evaluate the model on testing data
+    y_test_pred = model.predict(X_test)
+    print("Testing Performance:")
+    print(classification_report(y_test, y_test_pred))
+baseline_model('cspm', 'damagetakenperminute')
+```
+
 Our model ended up performing well, with the macro averages for precision, recall, and f1-score coming out to about 80%, while the weighted averages were a couple points higher, all for the testing data. This means it was about 80% accurate in predicting the roles of the players in the testing data, and I thought that was a good place to start for our baseline model.
 
 
@@ -47,14 +76,60 @@ However, looking at the distribution plots from earlier, these 4 features do mak
 
 For the final model, we created an `sklearn` `Pipeline`. We applied a standard scaler and a power transformer for the numerical features (all of them), and a one hot encoder for the `position` column. 
 
+```
+# Prepare the data
+data = players[['damagemitigatedperminute', 'earnedgoldshare', 'monsterkills', 'cspm', 'posnum']].copy()
+data.loc[:, 'posnum'] = pd.cut(data['posnum'], bins=[0, 1, 2, 3, 4, 5], labels=['top', 'jng', 'mid', 'bot', 'support'])
+
+# Split the data into training and testing sets
+X = data[['damagemitigatedperminute', 'earnedgoldshare', 'monsterkills', 'cspm']]
+y = data['posnum']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Defining transformers
+numeric_transformer = Pipeline(steps=[
+    ('scaler', StandardScaler()),
+    ('power', PowerTransformer(method='yeo-johnson'))
+])
+categorical_transformer = Pipeline(steps=[
+    ('onehot', OneHotEncoder())
+])
+preprocessor = ColumnTransformer(transformers=[
+    ('num', numeric_transformer, ['damagemitigatedperminute', 'earnedgoldshare', 'monsterkills', 'cspm']),
+    ('cat', categorical_transformer, [])
+])
+```
+
 The algorithm involved a `RandomForestClassifier()`, which involves creating many many decision trees. When creating the decision trees, which help us predict what role a player is playing, we have hyperparameters, which are variables aside from the features that we get to fine tune ourselves. In this case, these hyperparameters were:
 - `model__n_estimators`: this determines the number of decision trees in the random forest ensemble. Possible values were 100, 200, 300, and 400
 - `model__min_samples_split`: this specifies the number of samples required to split an internal node in a decision tree. Possible values were 2, 5, 10, and 15. 
 - `model__max_depth`: this defines the maximum depth of each decision tree. Possible values were 5, 10, and 15.
+
+```
+# Defining model
+model = RandomForestClassifier()
+# Defining Hyperparameters
+param_grid = {
+    'model__n_estimators': [100, 200, 300, 400],
+    'model__max_depth': [None, 5, 10, 15],
+    'model__min_samples_split': [2, 5, 10, 15]
+}
+# Creating Pipeline
+pipeline = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('model', model)
+])
+```
+
+
 We then used `GridSearchSV` to iteratively find the best combination of hyperparameters. After fitting the model, our best parameters ended up being:
 - `max depth` = 10
 - `min samples split` = 2
 - `model n estimators` = 100
+```
+grid_search = GridSearchCV(pipeline, param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+```
 
 `GridSearchSV` gave us our best model, and we used it to predict the testing data. Remember that our baseline model had a weighted average of 83% on precision, 81% on recall, and 81% for f1-score on the testing data. Our final model boasted a weighted average of 91% on precision, 89% on recall, and 89% on f1-score on the same testing data. This means our final model performed around 10% better than our baseline model when it came to predicting the roles of players in the LCS/LCK. While not perfect, it was a major improvement over the baseline model, and it was able to perfectly predict every jungle, support, and top player in the testing data, with just a few misses in the bot and mid roles. 
 
@@ -77,6 +152,39 @@ We performeda **permutation test** with a significance level of $p=0.05$ to see 
 **Null Hypothesis**: Our model is fair, its F1-score for the SuperLiga and the LCS/LCK are roughly the same, and any differences are due to random chance.
 
 **Alternative Hypothesis**: Our model is unfair. Its F1-score for SuperLiga is lower than its precision for the LCS/LCK. 
+
+Below is the code for the permutation tests. It combines the data, calculates the original f1-score, performs the permutation test, and then calculates the test statistic and p-value.
+
+```
+# Combine data
+combined_X = pd.concat([X_sl, X_lcs_lck])
+combined_y = pd.concat([y_sl, y_lcs_lck])
+
+# Calculate the original F1-score
+y_sl_pred = best_model.predict(X_sl)
+f1_orig = f1_score(y_sl, y_sl_pred, average='weighted')
+
+# Perform permutation test
+n_permutations = 1000
+f1_permuted_scores = []
+
+for i in range(n_permutations):
+    combined_y_permuted = shuffle(combined_y)
+    y_sl_permuted = combined_y_permuted[:len(y_sl)]
+
+    if y_sl_permuted.isna().sum() > 0:
+        continue
+
+    y_sl_permuted_pred = best_model.predict(X_sl)
+    f1_permuted = f1_score(y_sl_permuted, y_sl_permuted_pred, average='weighted')
+    f1_permuted_scores.append(f1_permuted)
+
+# Calculate test statistic
+test_statistic = f1_orig
+# Calculate p-value
+p_value = (np.sum(f1_permuted_scores >= f1_orig) + 1) / (n_permutations + 1)
+```
+
 
 The permutation test returned a p-value of $0.000999$, which is *very* small. This suggests that we should reject the null hypothesis, and **suggests** that there is *statistically significant evidence* that our model is unfair.
 
