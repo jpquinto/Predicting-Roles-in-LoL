@@ -14,6 +14,16 @@ This problem is a multiclass classification problem. We'll be predicting the `po
 
 Just like our exploratory data analysis project, we will be looking at data from the LCS (League of Legends Championship Series) 2022 season, as well as the LCK (League of Legends Champions Korea) 2022 season. We created a dataframe called `players` that has a row for each player in the LCS/LCK for the 2022 season and their average statistics in categories such as kills, deaths, assists, vision score, and many more. Most importantly, each player also had a column for what `position` they play: top, mid, jng (jungle), bot, or sup (support). 
 
+```
+# Retrieving Data
+lol = pd.read_csv('lol.csv', low_memory=False)
+# We are only going to be looking at the LCS and LCK
+lcslck = lol[lol['league'].isin(['LCS', 'LCK'])]
+
+lcslck.dropna(subset=['playername'], inplace=True)
+lcslck.head()
+```
+
 ### Baseline Model
 
 We started by creating a baseline model using just 2 features. First, we created boxplots of the distributions of different candidate features, separated by role. For this model, we ended up using the features: `cspm` and `damagetakenperminute`, since their distributions between the groups looked the most different. 
