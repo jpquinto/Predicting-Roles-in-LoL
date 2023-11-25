@@ -1,8 +1,6 @@
 # Predicting the Roles in League of Legends
 By Jeremy Quinto
 
-Exploratory Data Analysis for this dataset can be found [here](https://jpquinto.github.io/League-Of-Legends-Skill-Diffs-Analysis/)
-
 ### Overview
 
 In League of Legends, there are 5 roles that differ greatly in playstyle: top lane, mid lane, bottom lane, support, and jungle. Aside from spending most of their game in different spots of the map, the playable champions in each role are very different in terms of utility.
